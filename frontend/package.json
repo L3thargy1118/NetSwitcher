@@ -1,0 +1,60 @@
+{
+  "name": "netswitcher",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Windows 网络切换工具：有线 / WiFi / 手机热点 一键切换，系统代理开启时自动切到热点",
+  "author": "NetSwitcher contributors",
+  "license": "MIT",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "dev": "electron .",
+    "dist:dir": "electron-builder --win dir",
+    "dist:nsis": "electron-builder --win nsis"
+  },
+  "devDependencies": {
+    "electron": "^33.2.0",
+    "electron-builder": "^26.15.3"
+  },
+  "build": {
+    "appId": "com.netswitcher.app",
+    "productName": "NetSwitcher",
+    "directories": {
+      "output": "../dist/electron",
+      "buildResources": "../packaging"
+    },
+    "files": [
+      "main.js",
+      "preload.js",
+      "renderer/**/*"
+    ],
+    "extraResources": [
+      {
+        "from": "../dist/kernel/NetSwitcherKernel",
+        "to": "backend"
+      },
+      {
+        "from": "../packaging/netswitcher.ico",
+        "to": "icon.ico"
+      }
+    ],
+    "win": {
+      "icon": "../packaging/netswitcher.ico",
+      "target": [
+        "nsis"
+      ],
+      "requestedExecutionLevel": "requireAdministrator",
+      "artifactName": "NetSwitcher-${version}-Setup.${ext}"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "NetSwitcher",
+      "uninstallDisplayName": "NetSwitcher ${version}",
+      "deleteAppDataOnUninstall": false
+    }
+  }
+}

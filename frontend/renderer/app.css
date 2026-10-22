@@ -1,0 +1,512 @@
+/* 只写布局。颜色、字、部件全部来自 vendor/endfield.css 的 --ef-* 变量与 ef- 类。 */
+
+@font-face {
+  font-family: 'Saira';
+  src: url('vendor/fonts/Saira.ttf') format('truetype-variations');
+  font-weight: 100 900;
+  font-stretch: 50% 125%;
+  font-display: swap;
+}
+
+:root {
+  --ef-font-ui: 'Saira', 'Noto Sans SC', 'Microsoft YaHei', sans-serif;
+  --ef-font-text: 'Noto Sans SC', 'Microsoft YaHei', sans-serif;
+  --ns-window: 15rem;
+}
+
+html,
+body {
+  margin: 0;
+  min-height: 100%;
+}
+
+body.ef {
+  background: var(--ef-paper);
+  color: var(--ef-ink);
+}
+
+/* ---------- 命令栏 ---------- */
+.ef-cmdbar nav a {
+  gap: 0.15rem;
+}
+
+.ef-cmdbar .util {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-left: auto;
+  padding-block: 0.5rem;
+}
+
+.link-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.15rem 0.55rem;
+  border: 1px solid #3a3a3a;
+  color: #cfcfcf;
+  font-family: var(--ef-font-ui);
+  font-size: 0.72rem;
+  font-stretch: var(--ef-wide);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.link-badge i {
+  width: 7px;
+  height: 7px;
+  background: #6b6b6b;
+  flex: none;
+}
+
+.link-badge.is-on i {
+  background: var(--ef-signal);
+}
+
+.link-badge.is-off i {
+  background: #8a8a8a;
+}
+
+/* ---------- 主区 ---------- */
+main {
+  max-width: 82rem;
+  margin-inline: auto;
+  padding: 1.6rem clamp(1rem, 3vw, 2.4rem) 4rem;
+}
+
+.sec-head {
+  margin-bottom: 1.4rem;
+}
+
+.sec-head h1 {
+  margin: 0.1rem 0 0.5rem;
+  font-size: clamp(1.9rem, 3.4vw, 2.6rem);
+  font-weight: 800;
+  letter-spacing: -0.01em;
+}
+
+.sec-head .lede {
+  max-width: 42rem;
+  margin: 0;
+  color: var(--ef-ink-2);
+  font-family: var(--ef-font-text);
+  line-height: 1.75;
+}
+
+/* ---------- 网格 ---------- */
+.targets {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 19rem), 1fr));
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+}
+
+.cols {
+  display: grid;
+  grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+  align-items: start;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+}
+
+.cols > .ef-panel + .ef-panel {
+  margin-top: 0;
+}
+
+@media (max-width: 900px) {
+  .cols {
+    grid-template-columns: 1fr;
+  }
+}
+
+main > .ef-panel {
+  margin-bottom: 1.25rem;
+}
+
+main > .ef-panel:last-child {
+  margin-bottom: 0;
+}
+
+.two-col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.9rem;
+}
+
+@media (max-width: 620px) {
+  .two-col {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* 两列看板：长字符串（IP:端口）放三列里会顶到隔壁 */
+.ef-figs.two,
+.target .ef-figs {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.ef-figs b {
+  overflow-wrap: anywhere;
+}
+
+.note-line {
+  margin: 0.6rem 0 0;
+  line-height: 1.7;
+}
+
+.picker {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.7rem;
+}
+
+.picker select {
+  flex: 1;
+  min-width: 0;
+}
+
+/* 面板标题右侧的动作按钮 */
+.ef-panel > h2 > .ef-btn {
+  margin-left: 0.5rem;
+  align-self: center;
+}
+
+/* 标题里的小字负责把后面的按钮一起推到右边（套件里 small 自带 margin-left:auto） */
+
+/* ---------- 自动模式总开关（单独一格） ---------- */
+.auto-hero {
+  padding: 1.1rem 1.4rem 1.25rem;
+  border-left: 3px solid var(--ef-rule);
+  margin-bottom: 1rem;
+}
+
+.auto-hero.is-on {
+  border-left-color: var(--ef-signal);
+}
+
+.auto-hero-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.auto-hero-body {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(250px, 330px);
+  gap: 1.6rem;
+  align-items: start;
+  margin-top: 0.5rem;
+}
+
+.auto-hero-state {
+  font-size: 2.9rem;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: 0.02em;
+  color: var(--ef-ink-2);
+}
+
+.auto-hero.is-on .auto-hero-state {
+  color: var(--ef-signal);
+}
+
+.auto-hero-sub {
+  margin: 0.55rem 0 0;
+  color: var(--ef-ink-2);
+  font-size: 0.9rem;
+  line-height: 1.65;
+}
+
+.auto-hero-figs {
+  margin-top: 1.15rem;
+  padding-top: 0.95rem;
+  border-top: 1px solid var(--ef-rule);
+}
+
+/* 半栏里放三列，字号收回一档，避免「成功 6.8s」这种词挤到他格 */
+.auto-hero-figs b {
+  font-size: 1.6rem;
+}
+
+.auto-hero-figs b.is-hit {
+  color: var(--ef-signal);
+}
+
+.auto-hero-next {
+  display: flex;
+  align-items: baseline;
+  gap: 0.55rem;
+  margin: 0.95rem 0 0;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--ef-rule);
+  font-size: 0.88rem;
+  line-height: 1.6;
+  color: var(--ef-ink-2);
+}
+
+.auto-hero-next .ef-eyebrow {
+  flex: none;
+}
+
+.auto-hero.is-on .auto-hero-next .ef-eyebrow {
+  color: var(--ef-signal);
+}
+
+.auto-hero-switch {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--ef-rule);
+  font-weight: 700;
+}
+
+/* 只放大视觉尺寸，不改 width/height —— 滑块是按 48×26 绝对定位的 */
+.auto-hero-switch .ef-switch {
+  transform: scale(1.3);
+  transform-origin: right center;
+  margin-right: 5px;
+}
+
+.auto-hero-right .ef-ledger {
+  margin-top: 0.5rem;
+}
+
+@media (max-width: 980px) {
+  .auto-hero-body {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ---------- 两种触发方式对比 ---------- */
+.mode-compare {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1.1rem;
+}
+
+.mode-card {
+  border: 1px solid var(--ef-rule);
+  background: var(--ef-paper);
+  padding: 0.95rem 1.1rem 1.05rem;
+}
+
+.mode-card header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.55rem;
+}
+
+.mode-card header .ef-tag {
+  margin-left: auto;
+}
+
+.mode-card h3 {
+  flex-basis: 100%;
+  margin: 0.45rem 0 0;
+  font-size: 1.1rem;
+  font-weight: 800;
+  letter-spacing: 0.01em;
+}
+
+.mode-card .ef-ledger {
+  margin-top: 0.65rem;
+}
+
+.mode-note {
+  margin: 0.85rem 0 0;
+  padding-top: 0.7rem;
+  border-top: 1px solid var(--ef-rule);
+  color: var(--ef-ink-2);
+  font-size: 0.86rem;
+  line-height: 1.7;
+}
+
+.mode-foot {
+  margin: 1.1rem 0 0;
+  padding-top: 0.9rem;
+  border-top: 1px solid var(--ef-rule);
+  color: var(--ef-ink-2);
+  font-size: 0.9rem;
+  line-height: 1.7;
+}
+
+.mode-foot strong {
+  color: var(--ef-ink);
+}
+
+@media (max-width: 900px) {
+  .mode-compare {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ---------- 目标卡 ---------- */
+.target {
+  display: grid;
+  gap: 0.7rem;
+  align-content: start;
+}
+
+.target > h2 {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.target .ef-figs b {
+  font-size: clamp(1.6rem, 2.2vw, 2rem);
+  white-space: nowrap;
+}
+
+.target .ef-ledger {
+  border-top: 0;
+}
+
+.target > .ef-btn {
+  justify-content: center;
+  width: 100%;
+}
+
+.target.is-current {
+  border-color: var(--ef-ink);
+}
+
+/* ---------- 杂项 ---------- */
+.sub {
+  margin-top: 1.1rem;
+}
+
+.ef-bar-title.sub {
+  margin-top: 1.2rem;
+}
+
+.ef-actions {
+  display: flex;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+  margin: 0.9rem 0 0;
+}
+
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  margin: 0.9rem 0 0.2rem;
+}
+
+.ef-rows .meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 0.9rem;
+  color: var(--ef-ink-2);
+  font-family: var(--ef-font-ui);
+  font-size: 0.75rem;
+  font-stretch: var(--ef-wide);
+  font-variant-numeric: tabular-nums;
+}
+
+.ef-rows .acts {
+  display: flex;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.log-rows > li {
+  align-items: start;
+}
+
+.log-rows .lv {
+  display: inline-block;
+  min-width: 3.6rem;
+  font-family: var(--ef-font-ui);
+  font-size: 0.7rem;
+  font-stretch: var(--ef-wider);
+  letter-spacing: 0.1em;
+  color: var(--ef-ink-2);
+}
+
+.log-rows .lv.is-error {
+  color: var(--ef-ink);
+  background: var(--ef-signal);
+  padding: 0 0.35em;
+  width: fit-content;
+}
+
+.log-rows .msg {
+  font-family: var(--ef-font-text);
+  line-height: 1.6;
+  word-break: break-word;
+}
+
+.steps .st {
+  font-family: var(--ef-font-ui);
+  font-size: 0.72rem;
+  font-stretch: var(--ef-wide);
+  letter-spacing: 0.08em;
+  color: var(--ef-ink-2);
+}
+
+.steps .st.is-ok {
+  color: var(--ef-ink);
+}
+
+.steps .st.is-run {
+  background: var(--ef-signal);
+  color: var(--ef-on-signal);
+  padding: 0 0.35em;
+}
+
+.steps .st.is-fail {
+  color: var(--ef-ink);
+  border-bottom: 2px solid var(--ef-signal);
+}
+
+/* 输入框里的多行文本 */
+.ef-form textarea {
+  min-height: 9rem;
+  font-family: var(--ef-font-ui);
+  font-size: 0.85rem;
+  line-height: 1.7;
+  resize: vertical;
+}
+
+.ef-form select {
+  width: 100%;
+}
+
+/* 原生 dialog 需要显式居中与取消默认边框 */
+dialog.ef-dialog {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--ef-ink);
+}
+
+dialog.ef-dialog::backdrop {
+  background: var(--ef-scrim);
+}
+
+/* 关于页的说明文字 */
+.ef-panel .ef-prose {
+  margin-top: 0.6rem;
+  color: var(--ef-ink);
+}
+
+.ef-panel .ef-prose p {
+  margin: 0 0 0.6rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

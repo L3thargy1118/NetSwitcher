@@ -1,0 +1,387 @@
+<!doctype html>
+<html lang="zh-CN" data-theme="dark" data-ef-accent="yellow" data-ef-paper="neutral" data-ef-cut="standard" data-ef-ground="contours">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>NetSwitcher · 网络切换</title>
+<link rel="stylesheet" href="vendor/endfield.css" />
+<link rel="stylesheet" href="app.css" />
+<script>
+  try { const t = localStorage.getItem('theme'); if (t) document.documentElement.dataset.theme = t; } catch (e) {}
+</script>
+</head>
+<body class="ef ef-contours">
+<div class="ef-tri" aria-hidden="true"><i></i><i></i><i></i></div>
+
+<header class="ef-cmdbar">
+  <a class="brand" href="#"><span class="seal" aria-hidden="true">N</span>NETSWITCHER</a>
+  <nav aria-label="分区">
+    <a href="#" data-view="manual" aria-current="page">切换<small>Switch</small></a>
+    <a href="#" data-view="auto">自动<small>Auto</small></a>
+    <a href="#" data-view="library">网络库<small>Library</small><span class="count" id="nav-count">0</span></a>
+    <a href="#" data-view="logs">日志<small>Log</small></a>
+    <a href="#" data-view="settings">设置<small>Settings</small></a>
+  </nav>
+  <div class="util">
+    <span class="link-badge" id="net-badge"><i id="net-dot"></i><span id="net-text">检测中</span></span>
+    <span class="link-badge" id="admin-badge">普通权限</span>
+    <button class="ef-btn small" type="button" id="theme-btn" data-theme-toggle>深浅</button>
+  </div>
+</header>
+
+<main>
+  <!-- ============================ 切换 ============================ -->
+  <section class="view" id="view-manual">
+    <div class="sec-head">
+      <span class="ef-eyebrow slash">Manual switch</span>
+      <h1>手动切换</h1>
+      <p class="lede" id="manual-lede">选择一条链路，立即切换出口。切换会断开当前链路，正在进行的下载和连接会中断。</p>
+    </div>
+
+    <p class="ef-notice" id="admin-notice" hidden>当前不是管理员权限，启停网卡会失败。请右键以管理员身份运行。</p>
+    <p class="ef-notice" id="journal-notice" hidden>检测到上次切换未完成，网络可能停在中间状态。<button class="ef-btn small" type="button" id="restore-btn">还原到原网络</button>
+      <button class="ef-btn small" type="button" id="journal-dismiss">忽略</button></p>
+
+    <div class="targets">
+      <section class="ef-panel cut-br target" id="card-ethernet">
+        <h2><span class="ef-pair"><span class="ef-eyebrow">Ethernet</span><span>有线</span></span><span class="ef-tag" id="tag-ethernet">—</span></h2>
+        <div class="ef-figs">
+          <div><b id="status-ethernet">—</b><span>链路状态</span></div>
+          <div><b id="speed-ethernet">—</b><span>链路速率</span></div>
+        </div>
+        <ul class="ef-ledger">
+          <li><span>网卡</span><span class="ef-field" id="nic-ethernet">—</span></li>
+          <li><span>IPv4</span><span class="ef-field" id="ip-ethernet">—</span></li>
+        </ul>
+        <button class="ef-btn go" type="button" data-switch="ethernet">切到有线</button>
+      </section>
+
+      <section class="ef-panel target" id="card-wifi">
+        <h2><span class="ef-pair"><span class="ef-eyebrow">Wireless</span><span>WiFi</span></span><span class="ef-tag" id="tag-wifi">—</span></h2>
+        <div class="ef-figs">
+          <div><b id="status-wifi">—</b><span>链路状态</span></div>
+          <div><b id="signal-wifi">—</b><span>信号强度</span></div>
+        </div>
+        <ul class="ef-ledger">
+          <li><span>当前网络</span><span class="ef-field" id="ssid-wifi">—</span></li>
+          <li><span>IPv4</span><span class="ef-field" id="ip-wifi">—</span></li>
+        </ul>
+        <button class="ef-btn" type="button" id="wifi-pick-btn">从列表选择网络</button>
+      </section>
+
+      <section class="ef-panel cut-bl target" id="card-hotspot">
+        <h2><span class="ef-pair"><span class="ef-eyebrow">Hotspot</span><span>手机热点</span></span><span class="ef-tag" id="tag-hotspot">—</span></h2>
+        <div class="ef-figs">
+          <div><b id="status-hotspot">—</b><span>已保存</span></div>
+          <div><b id="count-hotspot">0</b><span>可用热点</span></div>
+        </div>
+        <ul class="ef-ledger">
+          <li><span>自动目标</span><span class="ef-field" id="auto-target-hint">未设置</span></li>
+          <li><span>提示</span><span class="ef-field">开代理前先连上热点</span></li>
+        </ul>
+        <button class="ef-btn go" type="button" id="hotspot-connect-btn">连接自动目标热点</button>
+      </section>
+    </div>
+
+    <div class="cols">
+      <section class="ef-panel" id="progress-panel" hidden>
+        <h2>切换进度 <small id="progress-title">—</small>
+          <button class="ef-btn small" type="button" id="progress-close">收起</button></h2>
+        <div class="ef-progress is-unknown" role="progressbar" aria-label="切换进度" id="progress-wrap">
+          <span class="ef-eyebrow" id="progress-phase">Switching / 切换中</span><span class="ef-field" id="progress-elapsed">0.0s</span><i id="progress-bar"></i>
+        </div>
+        <ul class="ef-rows" id="step-list"></ul>
+      </section>
+
+      <section class="ef-panel">
+        <h2>当前出口 <small id="egress-kind">—</small></h2>
+        <ul class="ef-ledger" id="egress-ledger">
+          <li><span>网卡</span><span class="ef-field">—</span></li>
+          <li><span>IPv4</span><span class="ef-field">—</span></li>
+          <li><span>网关</span><span class="ef-field">—</span></li>
+          <li><span>DNS</span><span class="ef-field">—</span></li>
+          <li><span>出口优先级</span><span class="ef-field">—</span></li>
+        </ul>
+      </section>
+
+      <section class="ef-panel">
+        <h2>系统代理 <small>只作监视，不改你的代理设置</small></h2>
+        <div class="ef-figs two">
+          <div><b id="proxy-state">关</b><span>系统代理</span></div>
+          <div><b id="proc-count">0</b><span>命中进程</span></div>
+        </div>
+        <ul class="ef-ledger">
+          <li><span>代理地址</span><span class="ef-field" id="proxy-port">—</span></li>
+        </ul>
+        <p class="ef-field note-line" id="proxy-note">系统代理关闭时，自动模式不会触发。</p>
+      </section>
+    </div>
+
+    <section class="ef-panel" id="wifi-panel">
+      <h2>周边 WiFi <small id="scan-time">未扫描</small><button class="ef-btn small" type="button" id="scan-btn">重新扫描</button></h2>
+      <div class="ef-table-wrap">
+        <table class="ef-table">
+          <thead><tr><th>信号</th><th>网络名称</th><th>加密</th><th>频段</th><th>状态</th><th class="num">操作</th></tr></thead>
+          <tbody id="wifi-rows"></tbody>
+        </table>
+      </div>
+      <p class="ef-empty" id="wifi-empty" hidden>还没有扫描结果。点「重新扫描」读取周边可见的网络；扫描需要几秒钟。</p>
+    </section>
+  </section>
+
+  <!-- ============================ 自动 ============================ -->
+  <section class="view" id="view-auto" hidden>
+    <div class="sec-head">
+      <span class="ef-eyebrow slash">Automatic mode</span>
+      <h1>自动模式</h1>
+      <p class="lede">检测到触发器时自动从有线或 WiFi 切到手机热点，触发器消失后切回原来的网络。</p>
+    </div>
+
+    <section class="ef-panel auto-hero cut-br" id="auto-hero">
+      <div class="auto-hero-head">
+        <span class="ef-eyebrow slash">Automatic / 自动模式</span>
+        <span class="ef-tag" id="auto-hero-badge">待机</span>
+      </div>
+      <div class="auto-hero-body">
+        <div class="auto-hero-left">
+          <div class="auto-hero-state" id="auto-hero-state">关闭</div>
+          <p class="auto-hero-sub" id="auto-hero-sub">关闭时不监听任何触发，网络不会自动切换。</p>
+          <div class="ef-figs auto-hero-figs">
+            <div><b id="hero-trigger">未命中</b><span>触发源</span></div>
+            <div><b id="hero-last">—</b><span>最近一次切换</span></div>
+            <div><b id="hero-egress">—</b><span>当前出口</span></div>
+          </div>
+          <p class="auto-hero-next">
+            <span class="ef-eyebrow">下一步</span>
+            <span id="hero-next">等待触发</span>
+          </p>
+        </div>
+        <div class="auto-hero-right">
+          <label class="auto-hero-switch">
+            <span>启用自动切换</span>
+            <input type="checkbox" role="switch" class="ef-switch" id="auto-enabled" />
+          </label>
+          <ul class="ef-ledger">
+            <li><span>触发方式</span><span class="ef-field" id="auto-hero-trigger">系统代理</span></li>
+            <li><span>目标热点</span><span class="ef-field" id="auto-hero-target">—</span></li>
+            <li><span>当前状态</span><span class="ef-field" id="auto-hero-mode">空闲</span></li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <div class="cols">
+      <section class="ef-panel ef-form">
+        <h2>触发与参数 <small id="auto-mode-name">系统代理</small></h2>
+
+        <h3 class="ef-bar-title sub">触发条件</h3>
+        <div class="ef-seg" role="radiogroup" aria-label="触发条件">
+          <label><input type="radio" name="automode" value="system_proxy" id="mode-proxy" /><span>系统代理开启</span></label>
+          <label><input type="radio" name="automode" value="app_process" id="mode-process" /><span>代理软件运行</span></label>
+        </div>
+        <p class="ef-field" id="mode-hint">监听 Windows 的「使用代理服务器」开关。开的时候切热点，关的时候切回来。</p>
+
+        <label class="field sub">
+          <span>目标热点</span>
+          <select id="auto-target"></select>
+          <small>只能选网络库里类型为「手机热点」的条目。没有的话先去网络库添加。</small>
+        </label>
+
+        <div class="two-col">
+          <label class="field">
+            <span>触发确认（秒）</span>
+            <input type="number" id="debounce-on" min="0" max="30" step="0.5" />
+            <small>持续命中这么久才动作，防抖动</small>
+          </label>
+          <label class="field">
+            <span>回切确认（秒）</span>
+            <input type="number" id="debounce-off" min="0" max="300" step="1" />
+            <small>触发器消失后等这么久才切回</small>
+          </label>
+        </div>
+
+        <p class="ef-actions"><button class="ef-btn go" type="button" id="auto-save">保存并应用</button></p>
+      </section>
+
+      <section class="ef-panel cut-br">
+        <h2>运行状态 <small id="auto-state-label">空闲</small></h2>
+        <div class="ef-figs">
+          <div><b id="auto-state">空闲</b><span>当前状态</span></div>
+          <div><b id="auto-since">0s</b><span>已持续</span></div>
+          <div><b id="auto-fails">0</b><span>连续失败</span></div>
+        </div>
+        <ul class="ef-ledger">
+          <li><span>触发原因</span><span class="ef-field" id="auto-reason">—</span></li>
+          <li><span>匹配进程</span><span class="ef-field" id="auto-matched">—</span></li>
+          <li><span>手动优先</span><span class="ef-field" id="auto-grace">无</span></li>
+          <li><span>冷却剩余</span><span class="ef-field" id="auto-cooldown">无</span></li>
+          <li><span>上次错误</span><span class="ef-field" id="auto-lasterr">无</span></li>
+        </ul>
+        <p class="ef-actions">
+          <button class="ef-btn small" type="button" id="cooldown-reset">解除冷却</button>
+          <button class="ef-btn small" type="button" id="takeover-btn">立即接管</button>
+        </p>
+      </section>
+    </div>
+
+    <section class="ef-panel">
+      <h2>两种触发方式的区别</h2>
+      <div class="mode-compare">
+        <article class="mode-card">
+          <header>
+            <span class="ef-eyebrow slash">Mode 01</span>
+            <span class="ef-tag">精确 / 偏晚</span>
+            <h3>系统代理开启</h3>
+          </header>
+          <ul class="ef-ledger">
+            <li><span>信号</span><span class="ef-field">ProxyEnable 0 → 1</span></li>
+            <li><span>切换时机</span><span class="ef-field">打开代理开关的瞬间</span></li>
+            <li><span>误判风险</span><span class="ef-field">低，只有真开才响</span></li>
+            <li><span>结束条件</span><span class="ef-field">开关关闭后回切</span></li>
+          </ul>
+          <p class="mode-note">不会误判；代价是比代理软件启动晚一拍，代理进程可能已经先连上节点了。</p>
+        </article>
+
+        <article class="mode-card">
+          <header>
+            <span class="ef-eyebrow slash">Mode 02</span>
+            <span class="ef-tag">更早 / 会误判</span>
+            <h3>代理软件运行</h3>
+          </header>
+          <ul class="ef-ledger">
+            <li><span>信号</span><span class="ef-field">进程列表出现匹配的 exe</span></li>
+            <li><span>切换时机</span><span class="ef-field">代理进程一启动</span></li>
+            <li><span>误判风险</span><span class="ef-field">中，常驻后台会一直停在热点</span></li>
+            <li><span>结束条件</span><span class="ef-field">匹配进程全部退出</span></li>
+          </ul>
+          <p class="mode-note">时机更早；代价是代理常驻后台（开机自启）时会一直停在热点上，需要自己去关掉自动模式。</p>
+        </article>
+      </div>
+      <p class="mode-foot"><strong>两种都一样：</strong>切换必须是硬断 —— 只改路由优先级不会打断已经建立的连接，代理的长连接会继续走原来的链路。</p>
+    </section>
+
+    <section class="ef-panel">
+      <h2>最近动作 <small>最近 20 条</small></h2>
+      <ul class="ef-rows" id="auto-timeline"></ul>
+    </section>
+  </section>
+
+  <!-- ============================ 网络库 ============================ -->
+  <section class="view" id="view-library" hidden>
+    <div class="sec-head">
+      <span class="ef-eyebrow slash">Network library</span>
+      <h1>网络库</h1>
+      <p class="lede">保存常用的 WiFi 和手机热点。密码用 Windows 的凭据保护加密，只在本机这个账户下能解开。</p>
+    </div>
+
+    <div class="cols">
+      <section class="ef-panel">
+        <h2>已保存的网络 <small id="lib-count">0 条</small></h2>
+        <ul class="ef-rows" id="profile-rows"></ul>
+        <p class="ef-empty" id="profile-empty" hidden>还没有保存任何网络。在右边的表单里填 SSID 和密码，保存后会出现在这里。</p>
+      </section>
+
+      <section class="ef-panel cut-tr">
+        <h2>添加网络</h2>
+        <form class="ef-form" id="profile-form" onsubmit="return false">
+          <label class="field"><span>SSID</span><input id="f-ssid" placeholder="手机热点或 WiFi 名称" autocomplete="off" /></label>
+          <div class="ef-seg" role="radiogroup" aria-label="类型">
+            <label><input type="radio" name="ptype" value="hotspot" checked /><span>手机热点</span></label>
+            <label><input type="radio" name="ptype" value="wifi" /><span>WiFi</span></label>
+          </div>
+          <label class="field"><span>密码</span><input id="f-pwd" type="password" placeholder="没有密码就留空" autocomplete="off" /></label>
+          <label class="field"><span>备注</span><input id="f-note" placeholder="可选" autocomplete="off" /></label>
+          <p class="ef-actions"><button class="ef-btn go" type="button" id="profile-save">保存到网络库</button></p>
+        </form>
+        <p class="ef-notice" id="lib-msg" hidden></p>
+      </section>
+    </div>
+  </section>
+
+  <!-- ============================ 日志 ============================ -->
+  <section class="view" id="view-logs" hidden>
+    <div class="sec-head">
+      <span class="ef-eyebrow slash">Event log</span>
+      <h1>日志</h1>
+      <p class="lede">切换、触发、回滚都记在这里，同时也写进 %APPDATA%\NetSwitcher\logs。</p>
+    </div>
+    <section class="ef-panel">
+      <h2>事件 <small id="log-count">0 条</small>
+        <button class="ef-btn small" type="button" id="log-clear">清空显示</button></h2>
+      <div class="filters">
+        <span class="ef-chip is-active" data-level="ALL">全部 <span class="n" id="n-all">0</span></span>
+        <span class="ef-chip" data-level="INFO">信息 <span class="n" id="n-info">0</span></span>
+        <span class="ef-chip" data-level="WARN">注意 <span class="n" id="n-warn">0</span></span>
+        <span class="ef-chip" data-level="ERROR">错误 <span class="n" id="n-error">0</span></span>
+      </div>
+      <ul class="ef-rows log-rows" id="log-rows"></ul>
+      <p class="ef-empty" id="log-empty">还没有事件。切换一次网络，或者打开自动模式，这里就会有记录。</p>
+    </section>
+  </section>
+
+  <!-- ============================ 设置 ============================ -->
+  <section class="view" id="view-settings" hidden>
+    <div class="sec-head">
+      <span class="ef-eyebrow slash">Settings</span>
+      <h1>设置</h1>
+      <p class="lede">这些参数决定切换的耐心程度。默认值适合大多数情况。</p>
+    </div>
+
+    <div class="cols">
+      <section class="ef-panel ef-form">
+        <h2>切换参数</h2>
+        <div class="ef-setting">
+          <div><b>切换后校验外网</b><small>拿到地址后还要能连通外部才算成功</small></div>
+          <input type="checkbox" role="switch" class="ef-switch" id="set-verify" />
+        </div>
+        <label class="field sub"><span>连接超时（秒）</span><input type="number" id="set-connect" min="5" max="60" /></label>
+        <label class="field"><span>外网校验超时（秒）</span><input type="number" id="set-online" min="5" max="60" /></label>
+        <label class="field"><span>手动优先时长（秒）</span><input type="number" id="set-grace" min="0" max="3600" /></label>
+        <label class="field"><span>失败冷却（秒）</span><input type="number" id="set-cooldown" min="60" max="3600" /></label>
+        <p class="ef-actions"><button class="ef-btn go" type="button" id="set-save">保存设置</button></p>
+      </section>
+
+      <section class="ef-panel ef-form">
+        <h2>代理软件名单 <small>用于「代理软件运行」触发</small></h2>
+        <label class="field">
+          <span>进程名，一行一条，支持通配符</span>
+          <textarea id="set-patterns" rows="8" spellcheck="false"></textarea>
+          <small>例如 clash*.exe、verge-mihomo*.exe。改完记得保存。</small>
+        </label>
+        <div class="picker">
+          <select id="proc-picker"><option value="">读取中…</option></select>
+          <button class="ef-btn small" type="button" id="proc-add">加入名单</button>
+        </div>
+        <p class="ef-field note-line">不确定 exe 名字时用这里：挑中后会把名字追加到上面的名单。</p>
+        <p class="ef-actions"><button class="ef-btn go" type="button" id="patterns-save">保存名单</button></p>
+      </section>
+    </div>
+
+    <section class="ef-panel">
+      <h2>关于</h2>
+      <ul class="ef-ledger">
+        <li><span>版本</span><span class="ef-field" id="about-version">—</span></li>
+        <li><span>运行权限</span><span class="ef-field" id="about-admin">普通用户</span></li>
+        <li><span>配置目录</span><span class="ef-field" id="about-dir">%APPDATA%\NetSwitcher</span></li>
+        <li><span>内核</span><span class="ef-field">Python · netsh / PowerShell</span></li>
+      </ul>
+      <p class="ef-notice">本工具只改变出口链路，不保证流量不被识别。请遵守所在学校或单位的网络管理规定。</p>
+    </section>
+  </section>
+</main>
+
+<dialog class="ef-dialog" id="pwd-dialog">
+  <div class="ef-panel ef-form">
+    <h2><span id="pwd-title">连接</span> <span id="pwd-ssid">—</span></h2>
+    <p id="pwd-hint">这个网络还没有保存过密码，输入一次就会记住。</p>
+    <label class="field"><span>密码</span><input id="pwd-input" type="password" autocomplete="off" /></label>
+    <p class="ef-actions">
+      <button class="ef-btn" type="button" data-close="cancel">取消</button>
+      <button class="ef-btn go" type="button" id="pwd-ok">连接</button>
+    </p>
+  </div>
+</dialog>
+
+<script type="module" src="app.js"></script>
+</body>
+</html>
